@@ -1,0 +1,119 @@
+1. Project Abstract
+
+Azure Managed Identity Adoption Across an Application Estate is an identity and security project that aims to eliminate the use of Service Principal client secrets for authenticating applications to Azure services. The project implements Azure Managed Identity to provide secretless authentication, allowing Azure-hosted applications to securely obtain access tokens through Microsoft Entra ID without storing or managing credentials.
+
+The project involves identifying applications that currently use Service Principal secrets, migrating supported applications to System-Assigned or User-Assigned Managed Identities, and configuring Azure Role-Based Access Control (RBAC) to provide only the required permissions. The implementation demonstrates secure access to Azure services such as Azure Key Vault, Azure Storage, and Azure SQL.
+
+The project also considers practical migration challenges. Some legacy services may not support Managed Identity and therefore require temporary alternative authentication mechanisms. Cross-tenant authentication scenarios are outside the scope of the project. The final outcome is a working proof of concept demonstrating secretless authentication, reduced credential-management overhead, and improved security for Azure applications.
+
+2. Project Architecture Diagram
+Proposed Architecture
+                         ┌───────────────────────────┐
+                         │     Microsoft Entra ID     │
+                         │      Identity Provider     │
+                         └─────────────┬─────────────┘
+                                       │
+                            Managed Identity
+                            + Access Tokens
+                                       │
+              ┌────────────────────────┼────────────────────────┐
+              │                        │                        │
+              ▼                        ▼                        ▼
+     ┌────────────────┐      ┌────────────────┐      ┌────────────────┐
+     │  Azure App     │      │ Azure Function │      │   Azure VM     │
+     │    Service     │      │                │      │                │
+     │    App 1       │      │     App 2      │      │     App 3      │
+     └───────┬────────┘      └───────┬────────┘      └───────┬────────┘
+             │                       │                       │
+             │ Managed Identity      │ Managed Identity      │ Managed Identity
+             │                       │                       │
+             ▼                       ▼                       ▼
+     ┌────────────────┐      ┌────────────────┐      ┌────────────────┐
+     │  Azure Key     │      │ Azure Storage  │      │   Azure SQL    │
+     │     Vault      │      │     Account    │      │    Database    │
+     └────────────────┘      └────────────────┘      └────────────────┘
+             │                       │                       │
+             └───────────────────────┼───────────────────────┘
+                                     ▼
+                            ┌──────────────────┐
+                            │   Azure RBAC     │
+                            │ Least Privilege  │
+                            └──────────────────┘
+
+
+        LEGACY SERVICES
+              │
+              ▼
+     ┌────────────────────┐
+     │ Services that don't│
+     │ support Managed    │
+     │ Identity           │
+     └─────────┬──────────┘
+               │
+               ▼
+       Temporary/Existing
+       Authentication
+       (Migration Limitation)
+
+------------------------------------------
+
+Authentication transformation :
+
+Before:
+
+Application
+     │
+     │ Client ID + Client Secret
+     ▼
+Microsoft Entra ID
+     │
+     ▼
+Azure Service
+
+
+------------------------------------------
+
+After:
+
+Application
+     │
+     │ Managed Identity
+     ▼
+Microsoft Entra ID
+     │
+     │ Access Token
+     ▼
+Azure Service
+
+--> The main objective is to move applications from the Before architecture to the After architecture and remove unnecessary Service Principal secrets.
+
+------------------------------------------------------------------------------------------------------------
+
+3. List of Services / Technologies Required
+Category	Service / Technology	Purpose
+Identity	Microsoft Entra ID	Identity and authentication
+Identity	Azure Managed Identity	Secretless authentication
+Authorization	Azure RBAC	Assign permissions to applications
+Security	Azure Key Vault	Secure storage of application secrets/keys where still required
+Storage	Azure Storage Account / Blob Storage	Demonstrate Managed Identity-based resource access
+Database	Azure SQL Database	Demonstrate identity-based database authentication
+Compute	Azure App Service	Host an application using Managed Identity
+Compute	Azure Functions	Demonstrate Managed Identity with serverless applications
+Compute	Azure Virtual Machine	Optional application-hosting environment
+Development	Python	Build the demonstration application
+Development	Azure SDK for Python	Access Azure resources programmatically
+Development	VS Code	Application development and testing
+CLI	Azure CLI	Create/configure Azure resources and test authentication
+Version Control	Git/GitHub	Source-code management
+Testing	Postman / REST API	Test application/API authentication if applicable
+Monitoring	Azure Monitor / Application Insights	Monitor application and authentication activity
+Minimum services needed for your working prototype
+
+You don't need to implement every service in the table. For a college project, the core implementation can use:
+
+Microsoft Entra ID + Managed Identity + Azure RBAC + App Service + Azure Key Vault + Azure Storage + Python/Azure SDK + Azure CLI + VS Code.
+
+This is enough to demonstrate the project's two main use cases:
+
+1.Remove Service Principal secrets .
+2. Enable secretless authentication to Azure services .
